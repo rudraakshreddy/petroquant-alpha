@@ -1,0 +1,90 @@
+20:34:47  INFO      
+20:34:47  INFO      ╔══════════════════════════════════════════════════════════╗
+20:34:47  INFO      ║     CRUDE OIL CRACK SPREAD MEAN-REVERSION STRATEGY      ║
+20:34:47  INFO      ║     Quantitative Finance — Semester 8 Major Project      ║
+20:34:47  INFO      ╚══════════════════════════════════════════════════════════╝
+20:34:47  INFO      
+20:34:47  INFO      ============================================================
+20:34:47  INFO      STEP 1: DATA PIPELINE
+20:34:47  INFO      ============================================================
+20:34:47  INFO        Downloading WTI (CL=F) ...
+20:34:56  INFO          WTI: 1509 trading days, range [-37.630, 123.700]
+20:34:56  INFO        Downloading RBOB (RB=F) ...
+20:34:56  INFO          RBOB: 1510 trading days, range [0.412, 4.276]
+20:34:56  INFO        Downloading HO (HO=F) ...
+20:34:57  INFO          HO: 1510 trading days, range [0.610, 5.135]
+20:34:57  INFO        Downloading benchmark series (SPY, WTI) ...
+20:34:58  INFO          Benchmark: 1509 rows, 2019-01-02 → 2024-12-30
+20:34:58  INFO        Validating raw data ...
+20:34:58  INFO        Trading calendar alignment: 99.9% dates shared across all instruments.
+20:34:58  INFO        Validation passed.
+20:34:58  INFO        Raw data saved to C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\data\raw (timestamp: 20260823_203458)
+20:34:58  INFO        Converting units to $/barrel ...
+20:34:58  WARNING     WTI: 1 out-of-range values after conversion (expected [10.0, 250.0] $/bbl). Check for unit errors.
+20:34:58  WARNING     RBOB: 2 out-of-range values after conversion (expected [20.0, 400.0] $/bbl). Check for unit errors.
+20:34:58  INFO        Aligned panel: 1510 rows, 2019-01-02 to 2024-12-30
+20:34:58  INFO        WTI  $/bbl: [-37.63, 123.70]
+20:34:58  INFO        RBOB $/bbl: [17.30, 179.60]
+20:34:58  INFO        HO   $/bbl: [25.64, 215.69]
+20:34:58  INFO        Processed panel saved -> C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\data\processed\panel.csv
+20:34:58  INFO        Benchmark saved       -> C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\data\processed\benchmark.csv
+20:34:58  INFO      
+20:34:58  INFO      ============================================================
+20:34:58  INFO      STEP 2: CRACK SPREAD CONSTRUCTION
+20:34:58  INFO      ============================================================
+20:34:58  INFO      3:2:1 Crack Spread Summary:
+20:34:58  INFO        Mean   : $23.767/bbl
+20:34:58  INFO        Std    : $10.986/bbl
+20:34:58  INFO        Min    : $2.396/bbl  (on 2020-03-23)
+20:34:58  INFO        Max    : $68.772/bbl  (on 2020-04-20)
+20:34:58  INFO        Skew   : 0.999
+20:34:58  INFO        Kurtosis: 0.902
+20:34:58  INFO      
+Yearly Summary ($/bbl):
+       Mean    Std    Min    Q25  Median    Q75    Max
+Year                                                  
+2019  18.43   3.56  10.67  15.43   18.12  21.97  24.68
+2020  11.26   4.48   2.40   9.17   10.58  12.81  68.77
+2021  19.67   3.07  11.29  18.48   20.24  21.69  25.72
+2022  38.46  11.12  19.45  30.88   37.24  45.55  64.63
+2023  32.06   6.70  17.82  25.88   32.56  37.02  47.01
+2024  22.85   5.17  14.37  17.40   23.83  26.04  33.52
+20:34:58  INFO        Saved table: yearly_crack_summary.csv
+20:34:58  INFO      
+Component Correlation (daily changes):
+         WTI    RBOB      HO
+WTI   1.0000  0.5210  0.4434
+RBOB  0.5210  1.0000  0.6451
+HO    0.4434  0.6451  1.0000
+20:34:58  INFO        Saved table: component_correlation.csv
+20:34:58  INFO      
+20:34:58  INFO      ============================================================
+20:34:58  INFO      STEP 3: STATISTICAL TESTS FOR MEAN REVERSION
+20:34:58  INFO      ============================================================
+20:34:58  INFO      ADF Test (primary: AIC lags):
+20:34:58  INFO        Statistic : -2.2819
+20:34:58  INFO        p-value   : 0.177884
+20:34:58  INFO        Lags used : 8
+20:34:58  INFO        Critical  : 1%=-3.4347, 5%=-2.8635, 10%=-2.5678
+20:34:58  INFO        Result    : Cannot reject unit root @ 5%
+20:34:58  INFO      KPSS Test:
+20:34:58  INFO        [level] stat=2.0423, p=0.010000 → Rejects stationarity @ 5% — possible unit root
+20:34:58  INFO        [trend] stat=0.6279, p=0.010000 → Rejects stationarity @ 5% — possible unit root
+20:34:58  INFO      Hurst Exponent:  H = 0.9707  (R² = 0.9984, p = 0.0000)
+20:34:58  INFO        H = 0.9707 — trending / persistent
+20:34:58  INFO      OU Half-Life:   β = -0.024565  (t = -4.338)
+20:34:58  INFO        λ (speed)    = 0.024565
+20:34:58  INFO        Half-life    = 28.2 days
+20:34:58  INFO        β = -0.024565 < 0 → mean-reverting. Half-life ≈ 28.2 trading days. Recommended z-score window: ~34 days.
+20:34:58  INFO      
+20:34:58  INFO      OVERALL: 1/4 tests confirm mean reversion.
+20:34:58  INFO        WEAK evidence for mean reversion (1/4 tests confirm). Review data quality and consider alternative regimes.
+20:34:58  INFO      
+  OU half-life = 28.2 days → recommended window range: 22–42 days
+20:34:58  INFO      
+20:34:58  INFO      ============================================================
+20:34:58  INFO      STEP 4: WALK-FORWARD PARAMETER SWEEP
+20:34:58  INFO      ============================================================
+20:34:58  INFO        IS period: 2019-01-02 → 2023-03-14 (1057 days)
+20:34:58  INFO        OOS period: 2023-03-15 → 2024-12-30 (453 days)
+20:34:58  INFO        Grid: 15 combinations
