@@ -36,7 +36,7 @@ def load_data():
         panel_df = pd.read_csv(base_dir / "data" / "processed" / "panel.csv", parse_dates=["Date"], index_col="Date")
         benchmark_df = pd.read_csv(base_dir / "data" / "processed" / "benchmark.csv", parse_dates=["Date"], index_col="Date")
         equity_df = pd.read_csv(base_dir / "results" / "tables" / "equity_curve.csv", parse_dates=["date"], index_col="date")
-        trade_log = pd.read_csv(base_dir / "results" / "tables" / "trade_log.csv", parse_dates=["entry_time", "exit_time"])
+        trade_log = pd.read_csv(base_dir / "results" / "tables" / "trade_log.csv", parse_dates=["entry_date", "exit_date"])
         param_sweep = pd.read_csv(base_dir / "results" / "tables" / "parameter_sweep_results.csv")
         yearly_summary = pd.read_csv(base_dir / "results" / "tables" / "yearly_crack_summary.csv", index_col="Year")
         
@@ -214,11 +214,11 @@ with tab4:
     
     # Formatting for display
     display_log = trade_log.copy()
-    display_log["entry_time"] = display_log["entry_time"].dt.strftime("%Y-%m-%d")
-    if "exit_time" in display_log.columns:
-        display_log["exit_time"] = pd.to_datetime(display_log["exit_time"]).dt.strftime("%Y-%m-%d")
+    display_log["entry_date"] = display_log["entry_date"].dt.strftime("%Y-%m-%d")
+    if "exit_date" in display_log.columns:
+        display_log["exit_date"] = pd.to_datetime(display_log["exit_date"]).dt.strftime("%Y-%m-%d")
     
-    numeric_cols = ["entry_price", "exit_price", "pnl_usd", "return_pct"]
+    numeric_cols = ["entry_spread", "exit_spread", "net_pnl", "return_pct"]
     for col in numeric_cols:
         if col in display_log.columns:
             display_log[col] = display_log[col].round(2)
@@ -229,7 +229,7 @@ with tab4:
         return f'color: {color}'
         
     st.dataframe(
-        display_log.style.map(color_pnl, subset=["pnl_usd"]) if hasattr(display_log.style, "map") else display_log.style.applymap(color_pnl, subset=["pnl_usd"]),
+        display_log.style.map(color_pnl, subset=["net_pnl"]) if hasattr(display_log.style, "map") else display_log.style.applymap(color_pnl, subset=["net_pnl"]),
         use_container_width=True,
         height=600
     )
