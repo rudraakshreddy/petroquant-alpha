@@ -123,6 +123,8 @@ class CrackSpreadBacktester:
             target_pos = int(df.get("position_exec", pd.Series(0.0, index=df.index)).iloc[i] or 0)
             vol_20     = df.get("crack_vol_20", pd.Series(np.nan, index=df.index)).iloc[i]
 
+            z_yesterday = df.get("z_score", pd.Series(0.0, index=df.index)).iloc[i-1] if i > 0 else z
+            
             # ------------------------------------------------------------
             # 1. Mark-to-market open position
             # ------------------------------------------------------------
@@ -175,7 +177,7 @@ class CrackSpreadBacktester:
                         "total_cost":    round(entry_cost_ + exit_cost, 2),
                         "net_pnl":       round(net_pnl, 2),
                         "hold_days":     hold_days,
-                        "exit_reason":   self._exit_reason(z, position),
+                        "exit_reason":   self._exit_reason(z_yesterday, position),
                     })
 
                     position     = 0
@@ -289,8 +291,18 @@ class CrackSpreadBacktester:
         cfg = self.cfg
         if abs(z) > cfg.STOP_THRESHOLD:
             return "stop_loss"
+            
+        # Signal reversal takes precedence if we blew past the exit threshold
+        # straight into the opposite entry threshold
+        if position == +1 and z > cfg.ENTRY_THRESHOLD:
+            return "signal_reversal"
+        if position == -1 and z < -cfg.ENTRY_THRESHOLD:
+            return "signal_reversal"
+            
+        # Normal mean-reversion exit
         if position == +1 and z > -cfg.EXIT_THRESHOLD:
             return "profit_target"
         if position == -1 and z < +cfg.EXIT_THRESHOLD:
             return "profit_target"
+            
         return "signal_reversal"
