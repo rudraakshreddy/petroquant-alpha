@@ -40,6 +40,10 @@ def load_data():
         param_sweep = pd.read_csv(base_dir / "results" / "tables" / "parameter_sweep_results.csv")
         yearly_summary = pd.read_csv(base_dir / "results" / "tables" / "yearly_crack_summary.csv", index_col="Year")
         
+        # Compute Benchmark NAVs (starting at $1M like the strategy)
+        benchmark_df["SPY_NAV"] = benchmark_df["SPY"] / benchmark_df["SPY"].iloc[0] * 1e6
+        benchmark_df["WTI_NAV"] = benchmark_df["WTI_BH"] / benchmark_df["WTI_BH"].iloc[0] * 1e6
+        
         with open(base_dir / "results" / "tables" / "performance_metrics.json", "r") as f:
             metrics = json.load(f)
             
