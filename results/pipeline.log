@@ -1,45 +1,45 @@
-20:34:47  INFO      
-20:34:47  INFO      ╔══════════════════════════════════════════════════════════╗
-20:34:47  INFO      ║     CRUDE OIL CRACK SPREAD MEAN-REVERSION STRATEGY      ║
-20:34:47  INFO      ║     Quantitative Finance — Semester 8 Major Project      ║
-20:34:47  INFO      ╚══════════════════════════════════════════════════════════╝
-20:34:47  INFO      
-20:34:47  INFO      ============================================================
-20:34:47  INFO      STEP 1: DATA PIPELINE
-20:34:47  INFO      ============================================================
-20:34:47  INFO        Downloading WTI (CL=F) ...
-20:34:56  INFO          WTI: 1509 trading days, range [-37.630, 123.700]
-20:34:56  INFO        Downloading RBOB (RB=F) ...
-20:34:56  INFO          RBOB: 1510 trading days, range [0.412, 4.276]
-20:34:56  INFO        Downloading HO (HO=F) ...
-20:34:57  INFO          HO: 1510 trading days, range [0.610, 5.135]
-20:34:57  INFO        Downloading benchmark series (SPY, WTI) ...
-20:34:58  INFO          Benchmark: 1509 rows, 2019-01-02 → 2024-12-30
-20:34:58  INFO        Validating raw data ...
-20:34:58  INFO        Trading calendar alignment: 99.9% dates shared across all instruments.
-20:34:58  INFO        Validation passed.
-20:34:58  INFO        Raw data saved to C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\data\raw (timestamp: 20260823_203458)
-20:34:58  INFO        Converting units to $/barrel ...
-20:34:58  WARNING     WTI: 1 out-of-range values after conversion (expected [10.0, 250.0] $/bbl). Check for unit errors.
-20:34:58  WARNING     RBOB: 2 out-of-range values after conversion (expected [20.0, 400.0] $/bbl). Check for unit errors.
-20:34:58  INFO        Aligned panel: 1510 rows, 2019-01-02 to 2024-12-30
-20:34:58  INFO        WTI  $/bbl: [-37.63, 123.70]
-20:34:58  INFO        RBOB $/bbl: [17.30, 179.60]
-20:34:58  INFO        HO   $/bbl: [25.64, 215.69]
-20:34:58  INFO        Processed panel saved -> C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\data\processed\panel.csv
-20:34:58  INFO        Benchmark saved       -> C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\data\processed\benchmark.csv
-20:34:58  INFO      
-20:34:58  INFO      ============================================================
-20:34:58  INFO      STEP 2: CRACK SPREAD CONSTRUCTION
-20:34:58  INFO      ============================================================
-20:34:58  INFO      3:2:1 Crack Spread Summary:
-20:34:58  INFO        Mean   : $23.767/bbl
-20:34:58  INFO        Std    : $10.986/bbl
-20:34:58  INFO        Min    : $2.396/bbl  (on 2020-03-23)
-20:34:58  INFO        Max    : $68.772/bbl  (on 2020-04-20)
-20:34:58  INFO        Skew   : 0.999
-20:34:58  INFO        Kurtosis: 0.902
-20:34:58  INFO      
+07:38:39  INFO      
+07:38:39  INFO      ╔══════════════════════════════════════════════════════════╗
+07:38:39  INFO      ║     CRUDE OIL CRACK SPREAD MEAN-REVERSION STRATEGY      ║
+07:38:39  INFO      ║     Quantitative Finance — Semester 8 Major Project      ║
+07:38:39  INFO      ╚══════════════════════════════════════════════════════════╝
+07:38:39  INFO      
+07:38:39  INFO      ============================================================
+07:38:39  INFO      STEP 1: DATA PIPELINE
+07:38:39  INFO      ============================================================
+07:38:39  INFO        Downloading WTI (CL=F) ...
+07:38:47  INFO          WTI: 1509 trading days, range [-37.630, 123.700]
+07:38:47  INFO        Downloading RBOB (RB=F) ...
+07:38:47  INFO          RBOB: 1510 trading days, range [0.412, 4.276]
+07:38:47  INFO        Downloading HO (HO=F) ...
+07:38:48  INFO          HO: 1510 trading days, range [0.610, 5.135]
+07:38:48  INFO        Downloading benchmark series (SPY, WTI) ...
+07:38:48  INFO          Benchmark: 1509 rows, 2019-01-02 → 2024-12-30
+07:38:48  INFO        Validating raw data ...
+07:38:48  INFO        Trading calendar alignment: 99.9% dates shared across all instruments.
+07:38:48  INFO        Validation passed.
+07:38:48  INFO        Raw data saved to C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\data\raw (timestamp: 20260824_073848)
+07:38:48  INFO        Converting units to $/barrel ...
+07:38:48  WARNING     WTI: 1 out-of-range values after conversion (expected [10.0, 250.0] $/bbl). Check for unit errors.
+07:38:48  WARNING     RBOB: 2 out-of-range values after conversion (expected [20.0, 400.0] $/bbl). Check for unit errors.
+07:38:48  INFO        Aligned panel: 1510 rows, 2019-01-02 to 2024-12-30
+07:38:48  INFO        WTI  $/bbl: [-37.63, 123.70]
+07:38:48  INFO        RBOB $/bbl: [17.30, 179.60]
+07:38:48  INFO        HO   $/bbl: [25.64, 215.69]
+07:38:48  INFO        Processed panel saved -> C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\data\processed\panel.csv
+07:38:48  INFO        Benchmark saved       -> C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\data\processed\benchmark.csv
+07:38:48  INFO      
+07:38:48  INFO      ============================================================
+07:38:48  INFO      STEP 2: CRACK SPREAD CONSTRUCTION
+07:38:48  INFO      ============================================================
+07:38:49  INFO      3:2:1 Crack Spread Summary:
+07:38:49  INFO        Mean   : $23.767/bbl
+07:38:49  INFO        Std    : $10.986/bbl
+07:38:49  INFO        Min    : $2.396/bbl  (on 2020-03-23)
+07:38:49  INFO        Max    : $68.772/bbl  (on 2020-04-20)
+07:38:49  INFO        Skew   : 0.999
+07:38:49  INFO        Kurtosis: 0.902
+07:38:49  INFO      
 Yearly Summary ($/bbl):
        Mean    Std    Min    Q25  Median    Q75    Max
 Year                                                  
@@ -49,42 +49,145 @@ Year
 2022  38.46  11.12  19.45  30.88   37.24  45.55  64.63
 2023  32.06   6.70  17.82  25.88   32.56  37.02  47.01
 2024  22.85   5.17  14.37  17.40   23.83  26.04  33.52
-20:34:58  INFO        Saved table: yearly_crack_summary.csv
-20:34:58  INFO      
+07:38:49  INFO        Saved table: yearly_crack_summary.csv
+07:38:49  INFO      
 Component Correlation (daily changes):
          WTI    RBOB      HO
 WTI   1.0000  0.5210  0.4434
 RBOB  0.5210  1.0000  0.6451
 HO    0.4434  0.6451  1.0000
-20:34:58  INFO        Saved table: component_correlation.csv
-20:34:58  INFO      
-20:34:58  INFO      ============================================================
-20:34:58  INFO      STEP 3: STATISTICAL TESTS FOR MEAN REVERSION
-20:34:58  INFO      ============================================================
-20:34:58  INFO      ADF Test (primary: AIC lags):
-20:34:58  INFO        Statistic : -2.2819
-20:34:58  INFO        p-value   : 0.177884
-20:34:58  INFO        Lags used : 8
-20:34:58  INFO        Critical  : 1%=-3.4347, 5%=-2.8635, 10%=-2.5678
-20:34:58  INFO        Result    : Cannot reject unit root @ 5%
-20:34:58  INFO      KPSS Test:
-20:34:58  INFO        [level] stat=2.0423, p=0.010000 → Rejects stationarity @ 5% — possible unit root
-20:34:58  INFO        [trend] stat=0.6279, p=0.010000 → Rejects stationarity @ 5% — possible unit root
-20:34:58  INFO      Hurst Exponent:  H = 0.9707  (R² = 0.9984, p = 0.0000)
-20:34:58  INFO        H = 0.9707 — trending / persistent
-20:34:58  INFO      OU Half-Life:   β = -0.024565  (t = -4.338)
-20:34:58  INFO        λ (speed)    = 0.024565
-20:34:58  INFO        Half-life    = 28.2 days
-20:34:58  INFO        β = -0.024565 < 0 → mean-reverting. Half-life ≈ 28.2 trading days. Recommended z-score window: ~34 days.
-20:34:58  INFO      
-20:34:58  INFO      OVERALL: 1/4 tests confirm mean reversion.
-20:34:58  INFO        WEAK evidence for mean reversion (1/4 tests confirm). Review data quality and consider alternative regimes.
-20:34:58  INFO      
+07:38:49  INFO        Saved table: component_correlation.csv
+07:38:49  INFO      
+07:38:49  INFO      ============================================================
+07:38:49  INFO      STEP 3: STATISTICAL TESTS FOR MEAN REVERSION
+07:38:49  INFO      ============================================================
+07:38:49  INFO      ADF Test (primary: AIC lags):
+07:38:49  INFO        Statistic : -2.2819
+07:38:49  INFO        p-value   : 0.177884
+07:38:49  INFO        Lags used : 8
+07:38:49  INFO        Critical  : 1%=-3.4347, 5%=-2.8635, 10%=-2.5678
+07:38:49  INFO        Result    : Cannot reject unit root @ 5%
+07:38:49  INFO      KPSS Test:
+07:38:49  INFO        [level] stat=2.0423, p=0.010000 → Rejects stationarity @ 5% — possible unit root
+07:38:49  INFO        [trend] stat=0.6279, p=0.010000 → Rejects stationarity @ 5% — possible unit root
+07:38:49  INFO      Hurst Exponent:  H = 0.9707  (R² = 0.9984, p = 0.0000)
+07:38:49  INFO        H = 0.9707 — trending / persistent
+07:38:49  INFO      OU Half-Life:   β = -0.024565  (t = -4.338)
+07:38:49  INFO        λ (speed)    = 0.024565
+07:38:49  INFO        Half-life    = 28.2 days
+07:38:49  INFO        β = -0.024565 < 0 → mean-reverting. Half-life ≈ 28.2 trading days. Recommended z-score window: ~34 days.
+07:38:49  INFO      
+07:38:49  INFO      OVERALL: 1/4 tests confirm mean reversion.
+07:38:49  INFO        WEAK evidence for mean reversion (1/4 tests confirm). Review data quality and consider alternative regimes.
+07:38:49  INFO      
   OU half-life = 28.2 days → recommended window range: 22–42 days
-20:34:58  INFO      
-20:34:58  INFO      ============================================================
-20:34:58  INFO      STEP 4: WALK-FORWARD PARAMETER SWEEP
-20:34:58  INFO      ============================================================
-20:34:58  INFO        IS period: 2019-01-02 → 2023-03-14 (1057 days)
-20:34:58  INFO        OOS period: 2023-03-15 → 2024-12-30 (453 days)
-20:34:58  INFO        Grid: 15 combinations
+07:38:49  INFO      
+07:38:49  INFO      ============================================================
+07:38:49  INFO      STEP 4: WALK-FORWARD PARAMETER SWEEP
+07:38:49  INFO      ============================================================
+07:38:49  INFO        IS period: 2019-01-02 → 2023-03-14 (1057 days)
+07:38:49  INFO        OOS period: 2023-03-15 → 2024-12-30 (453 days)
+07:38:49  INFO        Grid: 15 combinations
+07:38:49  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,136,654 (+13.67%) | Trades: 28
+07:38:50  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,127,072 (+12.71%) | Trades: 13
+07:38:50  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,133,761 (+13.38%) | Trades: 8
+07:38:50  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,142,285 (+14.23%) | Trades: 24
+07:38:51  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $981,569 (-1.84%) | Trades: 11
+07:38:51  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,075,017 (+7.50%) | Trades: 5
+07:38:51  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,099,979 (+10.00%) | Trades: 17
+07:38:52  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,044,721 (+4.47%) | Trades: 10
+07:38:52  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,079,907 (+7.99%) | Trades: 5
+07:38:52  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,236,033 (+23.60%) | Trades: 15
+07:38:53  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,074,853 (+7.49%) | Trades: 10
+07:38:53  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,036,478 (+3.65%) | Trades: 4
+07:38:53  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,276,263 (+27.63%) | Trades: 14
+07:38:54  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,099,867 (+9.99%) | Trades: 8
+07:38:54  INFO        Backtest: 2023-03-15 → 2024-12-30 | NAV: $1,000,000 → $1,105,640 (+10.56%) | Trades: 5
+07:38:54  INFO      
+  Best OOS params: window=60 days, entry_thresh=1.5σ, Sharpe=0.7691
+07:38:54  INFO        Saved table: parameter_sweep_results.csv
+07:38:54  INFO      
+07:38:54  INFO      ============================================================
+07:38:54  INFO      STEP 5: FULL BACKTEST (OPTIMAL PARAMETERS)
+07:38:54  INFO      ============================================================
+07:38:54  INFO        Using: window=60 days, entry_thresh=1.5σ
+07:38:55  INFO        Backtest: 2019-01-02 → 2024-12-30 | NAV: $1,000,000 → $1,120,866 (+12.09%) | Trades: 42
+07:38:55  INFO        Equity curve → results/tables/equity_curve.csv
+07:38:55  INFO        Trade log    → results/tables/trade_log.csv
+07:38:55  INFO      
+07:38:55  INFO      ============================================================
+07:38:55  INFO      STEP 6: PERFORMANCE METRICS
+07:38:55  INFO      ============================================================
+07:38:55  INFO        total_return_pct              : 12.2
+07:38:55  INFO        cagr_pct                      : 1.94
+07:38:55  INFO        ann_volatility_pct            : 18.85
+07:38:55  INFO        sharpe_ratio                  : -0.0696
+07:38:55  INFO        sortino_ratio                 : -0.0946
+07:38:55  INFO        calmar_ratio                  : 0.0383
+07:38:55  INFO        max_drawdown_pct              : -50.65
+07:38:55  INFO        peak_date                     : 2020-12-15
+07:38:55  INFO        trough_date                   : 2022-04-28
+07:38:55  INFO        drawdown_dur_days             : 499
+07:38:55  INFO        recovery_dur_days             : None
+07:38:55  INFO        var_95_daily_pct              : -1.4498
+07:38:55  INFO        var_99_daily_pct              : -3.6166
+07:38:55  INFO        cvar_95_daily_pct             : -2.9686
+07:38:55  INFO        n_trades                      : 42
+07:38:55  INFO        n_long_trades                 : 22
+07:38:55  INFO        n_short_trades                : 20
+07:38:55  INFO        hit_rate_pct                  : 78.57
+07:38:55  INFO        profit_factor                 : 1.1609
+07:38:55  INFO        avg_win_usd                   : 28444.26
+07:38:55  INFO        avg_loss_usd                  : -89841.64
+07:38:55  INFO        expectancy_usd                : 3097.28
+07:38:55  INFO        avg_hold_days                 : 26.2
+07:38:55  INFO        total_costs_usd               : 50820.0
+07:38:55  INFO        initial_nav_usd               : 1000000.0
+07:38:55  INFO        final_nav_usd                 : 1121968.39
+07:38:55  INFO        total_pnl_usd                 : 121968.39
+07:38:55  INFO      
+Benchmark Comparison:
+07:38:55  INFO        SPY: CAGR=17.17%, Sharpe=0.6471, MaxDD=-33.72%
+07:38:55  INFO        WTI_BH: CAGR=7.30%, Sharpe=-0.3264, MaxDD=-156.76%
+07:38:55  INFO      
+07:38:55  INFO      ============================================================
+07:38:55  INFO      STEP 7: GENERATING FIGURES
+07:38:55  INFO      ============================================================
+07:38:56  INFO        Saved: fig01_crack_spread_history.png
+07:38:58  INFO        Saved: fig02_zscore_signals.png
+07:38:59  INFO        Saved: fig03_equity_curve.png
+07:39:00  INFO        Saved: fig04_pnl_distribution.png
+07:39:01  INFO        Saved: fig05_rolling_sharpe.png
+07:39:01  INFO        Saved: fig06_parameter_heatmap.png
+07:39:02  INFO        Saved: fig07_statistical_summary.png
+07:39:02  INFO        Saved: fig08_yearly_performance.png
+07:39:03  INFO        Saved: fig09_benchmark_comparison.png
+07:39:04  INFO        Saved: fig10_hurst_rs_analysis.png
+07:39:04  INFO        All 10 figures saved to C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\results\figures
+07:39:04  INFO      
+07:39:04  INFO      ============================================================
+07:39:04  INFO      STEP 8: BUILDING INTERACTIVE DASHBOARD
+07:39:04  INFO      ============================================================
+07:39:08  INFO        Dashboard saved → C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\dashboard\crack_spread_dashboard.html
+07:39:08  INFO      
+07:39:08  INFO      ============================================================
+07:39:08  INFO      STEP 9: GENERATING LATEX REPORT
+07:39:08  INFO      ============================================================
+07:39:08  INFO        LaTeX source saved → C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\report\crack_spread_report.tex
+07:39:26  INFO        PDF compiled successfully → C:\Users\chakr\.gemini\antigravity\scratch\crack_spread_strategy\report\crack_spread_report.pdf
+07:39:26  INFO      
+07:39:26  INFO      ╔══════════════════════════════════════════════════════════╗
+07:39:26  INFO      ║                  PIPELINE COMPLETE                      ║
+07:39:26  INFO      ╠══════════════════════════════════════════════════════════╣
+07:39:26  INFO      ║  Sharpe Ratio  : -0.0696                             ║
+07:39:26  INFO      ║  CAGR          : 1.94      %                         ║
+07:39:26  INFO      ║  Max Drawdown  : -50.65    %                         ║
+07:39:26  INFO      ║  Hit Rate      : 78.57     %                         ║
+07:39:26  INFO      ║  # Trades      : 42                                  ║
+07:39:26  INFO      ╠══════════════════════════════════════════════════════════╣
+07:39:26  INFO      ║  Figures  → results/figures/  (10 files)              ║
+07:39:26  INFO      ║  Tables   → results/tables/                             ║
+07:39:26  INFO      ║  Dashboard→ dashboard/crack_spread_dashboard.html        ║
+07:39:26  INFO      ║  Report   → report/crack_spread_report.tex (.pdf)        ║
+07:39:26  INFO      ╚══════════════════════════════════════════════════════════╝
+07:39:26  INFO      

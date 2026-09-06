@@ -11,7 +11,6 @@ Output
 - data/processed/benchmark.csv       : SPY and WTI benchmark series
 - results/figures/fig01...fig10.png  : Ten publication-quality figures
 - results/tables/*.csv               : All summary tables
-- dashboard/crack_spread_dashboard.html : Interactive HTML dashboard
 - report/crack_spread_report.pdf      : LaTeX-compiled academic report (if pdflatex available)
 
 Reproducibility
@@ -51,7 +50,6 @@ from src.backtester          import CrackSpreadBacktester
 from src.risk_metrics        import (compute_full_metrics, compute_benchmark_metrics,
                                      compute_max_drawdown)
 from src.visualizations      import generate_all_figures
-from src.dashboard           import build_dashboard
 
 
 # ---------------------------------------------------------------------------
@@ -738,14 +736,7 @@ def main() -> None:
         sweep_results, best_params, bm_metrics, config
     )
 
-    # ================================================================
-    # STEP 8: Dashboard
-    # ================================================================
-    dash_path = build_dashboard(
-        df_final, equity, trades, stat_results,
-        sweep_results, best_params, metrics, config
-    )
-
+    
     # ================================================================
     # STEP 9: LaTeX Report
     # ================================================================
@@ -766,8 +757,7 @@ def main() -> None:
     log.info("╠══════════════════════════════════════════════════════════╣")
     log.info(f"║  Figures  → results/figures/  ({len(fig_paths)} files)              ║")
     log.info(f"║  Tables   → results/tables/                             ║")
-    log.info(f"║  Dashboard→ dashboard/crack_spread_dashboard.html        ║")
-    log.info(f"║  Report   → report/crack_spread_report.tex (.pdf)        ║")
+        log.info(f"║  Report   → report/crack_spread_report.tex (.pdf)        ║")
     log.info("╚══════════════════════════════════════════════════════════╝")
     log.info("")
 
