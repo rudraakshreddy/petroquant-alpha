@@ -39,10 +39,19 @@ class Config:
     # -----------------------------------------------------------------------
     # Signal Parameters (defaults; overridden by sweep)
     # -----------------------------------------------------------------------
-    ROLLING_WINDOW:      int   = 40     # z-score lookback (days)
-    ENTRY_THRESHOLD:     float = 2.0    # |z| > 2.0 → enter position
+    ROLLING_WINDOW:      int   = 30     # z-score lookback (days); ~OU half-life
+    ENTRY_THRESHOLD:     float = 2.0    # |z| > 2.0 -> enter position
     EXIT_THRESHOLD:      float = 0.5    # |z| < 0.5 → exit position
-    STOP_THRESHOLD:      float = 4.0    # |z| > 4.0 → hard stop (tail protection)
+    STOP_THRESHOLD:      float = 4.0    # |z| > 4.0 -> hard stop, with re-entry lockout
+
+    # Time stop at 2 x the fitted Ornstein-Uhlenbeck half-life (28.2 days).
+    # Derived from the fitted process, not tuned.
+    MAX_HOLD_DAYS:       int   = 56
+
+    # Seasonal adjustment of the SIGNAL (P&L is marked on the raw spread).
+    # K=1 is the a priori choice: one annual driving-season cycle.
+    SEASONAL_HARMONICS:  int   = 1
+    SEASONAL_MIN_TRAIN:  int   = 504   # observations before the first seasonal fit
 
     # -----------------------------------------------------------------------
     # Parameter Sweep Grid (walk-forward)

@@ -704,6 +704,9 @@ def main() -> None:
         entry_thresh = best_params["entry_thresh"],
         exit_thresh  = config.EXIT_THRESHOLD,
         stop_thresh  = config.STOP_THRESHOLD,
+        max_hold     = config.MAX_HOLD_DAYS,
+        harmonics    = config.SEASONAL_HARMONICS,
+        min_train    = config.SEASONAL_MIN_TRAIN,
     )
 
     bt          = CrackSpreadBacktester(config)
@@ -757,7 +760,7 @@ def main() -> None:
     log.info("╠══════════════════════════════════════════════════════════╣")
     log.info(f"║  Figures  → results/figures/  ({len(fig_paths)} files)              ║")
     log.info(f"║  Tables   → results/tables/                             ║")
-        log.info(f"║  Report   → report/crack_spread_report.tex (.pdf)        ║")
+    log.info(f"║  Report   → report/crack_spread_report.tex (.pdf)        ║")
     log.info("╚══════════════════════════════════════════════════════════╝")
     log.info("")
 

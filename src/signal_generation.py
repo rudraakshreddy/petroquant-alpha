@@ -82,53 +82,87 @@ def compute_zscore(series: pd.Series, window: int) -> pd.Series:
 # ---------------------------------------------------------------------------
 
 def build_position_series(zscore: pd.Series, entry_thresh: float,
-                           exit_thresh: float, stop_thresh: float) -> pd.Series:
+                           exit_thresh: float, stop_thresh: float,
+                           max_hold: int | None = None) -> pd.Series:
     """
-    Convert raw z-score into an integer position series via a state machine.
+    Convert the z-score into an integer position series via a state machine.
 
-    The state machine handles carry-over correctly:
-      - A position persists until an exit or stop condition is triggered.
-      - Re-entry into the same direction is allowed after exiting.
-      - Stops take priority over all other signals.
+    Rules
+    -----
+      - Enter long when z < -entry_thresh, short when z > +entry_thresh.
+      - Exit when |z| < exit_thresh (the deviation has normalised).
+      - Stop out when |z| > stop_thresh, and SUPPRESS RE-ENTRY until |z| falls
+        back below entry_thresh.
+      - Close any position held longer than `max_hold` sessions.
+
+    Why the lockout is required
+    ---------------------------
+    Because stop_thresh > entry_thresh by construction, every bar on which the
+    stop fires also satisfies the entry condition. A stop implemented as a bare
+    flattening would therefore close and immediately reopen the same position on
+    the same bar, leaving exposure unchanged and making the control vacuous. The
+    `locked` flag is what gives the stop effect: once triggered, no new position
+    is opened until the deviation has returned to a range in which the
+    mean-reversion hypothesis is again tenable.
+
+    Why the time stop
+    -----------------
+    The fitted Ornstein-Uhlenbeck half-life implies a deviation should decay by
+    half within ~28 sessions. A position held far beyond that horizon without
+    reverting is evidence against the model that motivated it, so it is closed.
+    The threshold is derived from the fitted process (2 x half-life), not tuned.
 
     Parameters
     ----------
     zscore : pd.Series
     entry_thresh, exit_thresh, stop_thresh : float
+    max_hold : int, optional
+        Maximum holding period in sessions. None disables the time stop.
 
     Returns
     -------
     pd.Series
-        Values: +1 (long crack), −1 (short crack), 0 (flat).
+        Values: +1 (long crack), -1 (short crack), 0 (flat).
     """
     positions = np.zeros(len(zscore), dtype=float)
-    pos       = 0   # current state
+    pos       = 0       # current state
+    held      = 0       # sessions the current position has been open
+    locked    = False   # re-entry suppressed after a stop
 
     for i, z in enumerate(zscore.values):
         if np.isnan(z):
             positions[i] = 0
-            pos = 0
+            pos, held = 0, 0
             continue
 
-        # --- Exit checks (take priority over entries) ---
-        if pos == +1:
-            if z > -exit_thresh or z > stop_thresh:
-                pos = 0
-        elif pos == -1:
-            if z < +exit_thresh or z < -stop_thresh:
-                pos = 0
+        # --- Normal exit: the deviation has normalised ---
+        if pos == +1 and z > -exit_thresh:
+            pos, held = 0, 0
+        elif pos == -1 and z < +exit_thresh:
+            pos, held = 0, 0
 
-        # Hard stop: regardless of direction
+        # --- Hard stop, with re-entry lockout ---
         if abs(z) > stop_thresh:
-            pos = 0
+            pos, held = 0, 0
+            locked = True
 
-        # --- Entry checks (only from flat) ---
-        if pos == 0:
+        # --- Time stop ---
+        if max_hold is not None and pos != 0 and held >= max_hold:
+            pos, held = 0, 0
+
+        # --- Release the lockout once the deviation is tradeable again ---
+        if locked and abs(z) < entry_thresh:
+            locked = False
+
+        # --- Entry (only from flat, and only when not locked out) ---
+        if pos == 0 and not locked:
             if z < -entry_thresh:
-                pos = +1
+                pos, held = +1, 0
             elif z > +entry_thresh:
-                pos = -1
+                pos, held = -1, 0
 
+        if pos != 0:
+            held += 1
         positions[i] = pos
 
     return pd.Series(positions, index=zscore.index, name="position", dtype=float)
@@ -138,9 +172,81 @@ def build_position_series(zscore: pd.Series, entry_thresh: float,
 # Signal Generation (full DataFrame)
 # ---------------------------------------------------------------------------
 
+def _harmonic_design(doy: np.ndarray, K: int) -> np.ndarray:
+    """Design matrix of K sine/cosine pairs on the annual cycle, plus intercept."""
+    cols = [np.ones(len(doy))]
+    for k in range(1, K + 1):
+        cols += [np.sin(2 * np.pi * k * doy / 365.25),
+                 np.cos(2 * np.pi * k * doy / 365.25)]
+    return np.column_stack(cols)
+
+
+def deseasonalise(series: pd.Series, harmonics: int = 1,
+                  min_train: int = 504) -> pd.Series:
+    """
+    Remove the annual seasonal component of the refining margin from the signal.
+
+    Refining margins follow a documented annual cycle driven by the northern
+    hemisphere driving season, winter heating demand and the spring/autumn
+    refinery turnaround periods. That component is predictable, so a z-score
+    computed on the raw level would read it as disequilibrium and trade against
+    it. The signal is therefore computed on the residual of
+
+        S_t = c0 + sum_k [ a_k sin(2 pi k d_t / 365.25)
+                         + b_k cos(2 pi k d_t / 365.25) ] + u_t
+
+    Two properties are essential to validity:
+
+      1. Coefficients are estimated on an EXPANDING window using only
+         observations strictly prior to t, refitted once per calendar year. No
+         future information enters the seasonal estimate.
+      2. The adjustment applies to the SIGNAL ONLY. Profit and loss continues to
+         be marked on the actual traded spread. Backtesting on the
+         deseasonalised series would credit the strategy with a return it cannot
+         realise.
+
+    The first `min_train` observations have no seasonal estimate and are
+    returned as NaN, so no position is taken until the fit is defined.
+
+    Parameters
+    ----------
+    series : pd.Series
+        Crack spread indexed by date.
+    harmonics : int
+        Number of sine/cosine pairs. K=1 is the a priori choice: the mechanism
+        is a single annual cycle, and each extra harmonic adds two parameters
+        estimated on a short history.
+    min_train : int
+        Minimum observations before the first seasonal fit.
+
+    Returns
+    -------
+    pd.Series
+        Deseasonalised residual, NaN over the warm-up period.
+    """
+    doy = pd.to_datetime(series.index).dayofyear.values
+    v = series.values
+    out = np.full(len(v), np.nan)
+    beta, last_year = None, None
+
+    for i in range(len(v)):
+        year = pd.Timestamp(series.index[i]).year
+        if i >= min_train and year != last_year:      # refit annually, history only
+            X, y = _harmonic_design(doy[:i], harmonics), v[:i]
+            ok = np.isfinite(y)
+            if ok.sum() > min_train:
+                beta = np.linalg.lstsq(X[ok], y[ok], rcond=None)[0]
+                last_year = year
+        if beta is not None:
+            out[i] = v[i] - _harmonic_design(np.array([doy[i]]), harmonics).dot(beta)[0]
+
+    return pd.Series(out, index=series.index, name="crack_deseason")
+
+
 def generate_signals(df: pd.DataFrame, window: int,
                      entry_thresh: float, exit_thresh: float,
-                     stop_thresh: float) -> pd.DataFrame:
+                     stop_thresh: float, max_hold: int | None = None,
+                     harmonics: int = 1, min_train: int = 504) -> pd.DataFrame:
     """
     Add z-score and position columns to the data DataFrame.
 
@@ -162,9 +268,14 @@ def generate_signals(df: pd.DataFrame, window: int,
         Copy of df with z_score, position, position_exec added.
     """
     out = df.copy()
-    out["z_score"]       = compute_zscore(out["crack"], window)
+
+    # Signal is computed on the DESEASONALISED spread; P&L is always marked on
+    # the untransformed traded spread. See deseasonalise() for the rationale.
+    if "crack_deseason" not in out.columns:
+        out["crack_deseason"] = deseasonalise(out["crack"], harmonics, min_train)
+    out["z_score"]       = compute_zscore(out["crack_deseason"], window)
     out["position"]      = build_position_series(
-        out["z_score"], entry_thresh, exit_thresh, stop_thresh
+        out["z_score"], entry_thresh, exit_thresh, stop_thresh, max_hold
     )
     # 1-day execution lag: trade at next day's close based on today's signal
     out["position_exec"] = out["position"].shift(1).fillna(0.0)
@@ -241,16 +352,23 @@ def parameter_sweep(df: pd.DataFrame, config: Config) -> Tuple[pd.DataFrame, dic
         try:
             df_sig = generate_signals(
                 df, window, entry_thresh,
-                config.EXIT_THRESHOLD, config.STOP_THRESHOLD
+                config.EXIT_THRESHOLD, config.STOP_THRESHOLD,
+                max_hold  = config.MAX_HOLD_DAYS,
+                harmonics = config.SEASONAL_HARMONICS,
+                min_train = config.SEASONAL_MIN_TRAIN,
             )
+            # Selection uses the TRAINING segment only. Choosing parameters by
+            # their performance on the held-out segment would turn that segment
+            # into a selection set and bias the reported result upward.
+            df_is   = df_sig.iloc[:split_idx].copy()
             df_oos  = df_sig.iloc[split_idx:].copy()
-            equity, trades = bt.run(df_oos)
+            equity, trades = bt.run(df_is)
 
             if len(equity) < 20 or len(trades) < 3:
                 records.append({
                     "window": window, "entry_thresh": entry_thresh,
-                    "oos_sharpe": np.nan, "n_trades": len(trades),
-                    "max_dd_pct": np.nan
+                    "is_sharpe": np.nan, "oos_sharpe": np.nan,
+                    "n_trades": len(trades), "max_dd_pct": np.nan
                 })
                 continue
 
@@ -259,10 +377,17 @@ def parameter_sweep(df: pd.DataFrame, config: Config) -> Tuple[pd.DataFrame, dic
             dd_info   = compute_max_drawdown(equity["nav"])
             max_dd    = dd_info["max_drawdown"]
 
+            # Held-out performance is RECORDED for reporting, never used to select.
+            eq_o, tr_o = bt.run(df_oos)
+            oos_sharpe = (compute_sharpe(eq_o["nav"].pct_change().dropna(),
+                                         config.RISK_FREE_RATE)
+                          if len(eq_o) >= 20 and len(tr_o) >= 3 else np.nan)
+
             records.append({
                 "window":       window,
                 "entry_thresh": entry_thresh,
-                "oos_sharpe":   round(sharpe, 4),
+                "is_sharpe":    round(sharpe, 4),
+                "oos_sharpe":   round(oos_sharpe, 4) if oos_sharpe == oos_sharpe else np.nan,
                 "n_trades":     len(trades),
                 "max_dd_pct":   round(max_dd, 2),
             })
@@ -286,9 +411,9 @@ def parameter_sweep(df: pd.DataFrame, config: Config) -> Tuple[pd.DataFrame, dic
     results_df = pd.DataFrame(records)
 
     logger.info(
-        f"\n  Best OOS params: window={best_params['window']} days, "
+        f"\n  Selected on training segment: window={best_params['window']} days, "
         f"entry_thresh={best_params['entry_thresh']}σ, "
-        f"Sharpe={best_sharpe:.4f}"
+        f"IS Sharpe={best_sharpe:.4f}"
     )
 
     return results_df, best_params
