@@ -1,166 +1,207 @@
-﻿# Crude Oil Crack Spread Mean-Reversion Strategy
+# PetroQuant Alpha
 
+**A seasonally adjusted mean-reversion system for the 3:2:1 crude oil crack spread.**
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/dashboard-live-FF4B4B.svg)](https://petroquant-alpha.streamlit.app)
 
----
-
-## Overview
-
-A production-quality systematic trading strategy exploiting **mean reversion in the 3:2:1 crude oil crack spread** â€” the synthetic gross refining margin from converting 3 barrels of WTI crude into 2 barrels of RBOB gasoline and 1 barrel of heating oil.
-
-$$\text{Crack}_t = \frac{2 \cdot \text{RBOB}_t + \text{HO}_t - 3 \cdot \text{WTI}_t}{3} \quad [\$/\text{bbl}]$$
-
-### Why This Works (Physical Rationale)
-
-High crack spreads â†’ refineries increase utilisation â†’ more crude demand + more product supply â†’ margins compress back down. This negative feedback loop creates a gravitational pull toward equilibrium that the strategy systematically exploits.
+**[Live dashboard](https://petroquant-alpha.streamlit.app)** · **[Full technical paper (PDF)](report/petroquant_report.pdf)**
 
 ---
 
-## Project Structure
+## What this is
+
+The 3:2:1 crack spread is the synthetic gross refining margin from converting three barrels of crude oil
+into two barrels of gasoline and one of distillate:
 
 ```
-crack_spread_strategy/
-â”‚
-â”œâ”€â”€ main.py                        â† Run this to execute everything
-â”œâ”€â”€ config.py                      â† All parameters in one place
-â”œâ”€â”€ requirements.txt
-â”‚
-â”œâ”€â”€ src/
-â”‚   â”œâ”€â”€ data_pipeline.py           â† Download, validate, unit-convert
-â”‚   â”œâ”€â”€ spread_construction.py     â† 3:2:1 formula + rolling stats
-â”‚   â”œâ”€â”€ statistical_tests.py       â† ADF, KPSS, Hurst, OU half-life
-â”‚   â”œâ”€â”€ signal_generation.py       â† Rolling z-score + walk-forward sweep
-â”‚   â”œâ”€â”€ backtester.py              â† Custom event-loop backtester
-â”‚   â”œâ”€â”€ risk_metrics.py            â† Full risk/performance suite
-â”‚   â”œâ”€â”€ visualizations.py          â† 10 publication-quality figures
-â”‚   â””â”€â”€ dashboard.py               â† Plotly HTML interactive dashboard
-â”‚
-â”œâ”€â”€ data/
-â”‚   â”œâ”€â”€ raw/                       â† Downloaded with timestamps
-â”‚   â””â”€â”€ processed/                 â† Cleaned $/bbl panel
-â”‚
-â”œâ”€â”€ results/
-â”‚   â”œâ”€â”€ figures/                   â† fig01...fig10 at 300 DPI
-â”‚   â””â”€â”€ tables/                    â† CSV + JSON outputs
-â”‚
-â”œâ”€â”€ report/
-â”‚   â”œâ”€â”€ crack_spread_report.tex    â† LaTeX source (auto-generated with results)
-â”‚   â””â”€â”€ crack_spread_report.pdf    â† Compiled PDF (if pdflatex available)
-â”‚
-â””â”€â”€ dashboard/
-    â””â”€â”€ crack_spread_dashboard.html  â† Interactive 6-tab dashboard
+S_t = (2·RBOB_t + HO_t − 3·WTI_t) / 3        [$ per barrel]
 ```
 
----
+Economic theory predicts it mean-reverts: high margins raise refinery utilisation, which simultaneously
+increases crude demand and product supply, compressing the margin back down.
 
-## Quick Start
+This repository contains a complete study of that proposition over **2 January 2019 – 30 December 2024**
+(1,510 trading days), a window deliberately chosen to contain two structural dislocations — the 2020 demand
+collapse and the 2022 refining shock — together with a trading system built from the statistical
+characterisation and validated under rolling-origin walk-forward analysis.
+
+## Headline results
+
+| Metric | This system | S&P 500 ETF | WTI buy-and-hold |
+|---|---:|---:|---:|
+| Total return (6y) | **75.75 %** | — | — |
+| CAGR | 9.87 % | 17.17 % | 7.30 % |
+| Annualised volatility | 10.04 % | — | — |
+| Sharpe ratio | 0.490 | 0.647 | −0.326 |
+| Maximum drawdown | **−12.72 %** | −33.72 % | −156.76 % |
+| **Calmar ratio** | **0.78** | 0.51 | 0.05 |
+| Hit rate / profit factor | 82.1 % / 6.69 | — | — |
+
+Under rolling-origin walk-forward validation (parameters re-selected on training data only):
+
+| Configuration | Stitched OOS Sharpe | OOS return | Max DD | Profitable folds |
+|---|---:|---:|---:|---:|
+| z-score on raw spread | −0.019 | +5.0 % | −41.9 % | 3/5 |
+| + stop semantics | 0.417 | +25.5 % | −17.8 % | 3/5 |
+| **+ deseasonalised signal** | **0.661** | **+36.4 %** | **−11.4 %** | **5/5** |
+
+All five folds independently selected the same configuration (`window=30`, `entry=2.0σ`).
+
+> **Reported honestly:** a stationary-bootstrap 95 % interval for the out-of-sample Sharpe is
+> `[−0.160, 1.560]` and does **not** exclude zero. The relative improvement and the drawdown reduction are
+> robust; the absolute Sharpe level is not resolvable on 625 out-of-sample days.
+
+## The three design decisions that matter
+
+**1. The statistical diagnostics disagree — and that disagreement is the design input.**
+
+| Test | Result | Verdict |
+|---|---|---|
+| Augmented Dickey–Fuller | stat −2.28, p = 0.178 | cannot reject unit root |
+| KPSS (level / trend) | 2.04 / 0.63, p < 0.01 | rejects stationarity |
+| Hurst exponent (R/S) | H ≈ 0.97 | persistent, not reverting |
+| Ornstein–Uhlenbeck fit | β = −0.0246, t = −4.34 | **reverting**, half-life 28.2 d |
+
+One of four supports the trading premise. The reconciliation: the spread reverts **locally** toward an
+equilibrium that itself **migrates**. A rolling estimate gives a finite half-life (median 24.6 days) over
+~80 % of the sample, undefined only across the regime transitions.
+
+**2. The signal is deseasonalised; the P&L is not.**
+
+Refining margins have a documented annual cycle (driving season, heating demand, refinery turnarounds).
+A first-order harmonic component of amplitude **\$4.55/bbl** against a total standard deviation of
+\$10.99/bbl is predictable — and a z-score on the raw level trades against it as though it were
+disequilibrium. Harmonic coefficients are fitted on an **expanding window using only prior data**, refitted
+annually. Crucially, the adjustment applies to the *signal only*; P&L is marked on the actual traded spread.
+
+**3. The stop-loss suppresses re-entry.**
+
+Because `θ_stop > θ_entry` by construction, any bar on which the stop fires also satisfies the entry
+condition. A stop implemented as a bare flattening would close and immediately reopen the same position on
+the same bar, leaving exposure unchanged. The state machine therefore latches: entries are suppressed until
+`|z| < θ_entry`.
+
+## Repository layout
+
+```
+├── main.py                     Run the full pipeline end to end
+├── config.py                   Every tunable parameter, one place
+├── streamlit_app.py            Interactive dashboard
+│
+├── src/
+│   ├── data_pipeline.py        Download, validate, $/gal → $/bbl conversion
+│   ├── spread_construction.py  3:2:1 formula and rolling statistics
+│   ├── statistical_tests.py    ADF, KPSS, Hurst R/S, OU half-life
+│   ├── signal_generation.py    Rolling z-score, state machine, walk-forward sweep
+│   ├── backtester.py           Event-loop backtester with explicit cost accounting
+│   ├── risk_metrics.py         Sharpe, Sortino, Calmar, VaR, CVaR, drawdown
+│   ├── visualizations.py       Publication figures
+│   └── report_generator.py     LaTeX report generation
+│
+├── data/processed/             Aligned price panel and benchmarks
+├── results/
+│   ├── figures/                300-DPI figures
+│   └── tables/                 Metrics, trade log, equity curve, parameter sweep
+└── report/                     Technical paper (LaTeX source + PDF)
+```
+
+## Quick start
 
 ```bash
-# 1. Navigate to project directory
-cd crack_spread_strategy
-
-# 2. Install dependencies
+git clone https://github.com/rudraakshreddy/petroquant-alpha.git
+cd petroquant-alpha
+python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-# 3. Run the full pipeline
-python main.py
+python main.py            # full pipeline: data → tests → sweep → backtest → figures → report
+streamlit run streamlit_app.py
 ```
 
-Total runtime: **~2â€“5 minutes** (dominated by yfinance download speed).
+Every parameter lives in `config.py`; changing a value there propagates through the whole pipeline without
+touching module code.
 
----
+## Methodology in brief
 
-## What Gets Generated
+**Data.** Front-month CME futures: WTI (`CL=F`), RBOB gasoline (`RB=F`), NY Harbor ULSD (`HO=F`). Gasoline
+and distillate are quoted in \$/gallon and are converted at 42 gal/bbl before the spread formula is applied
+— omitting this produces a numerically plausible but economically meaningless series. Calendars are aligned
+on their intersection (99.9 % of dates common).
 
-| Output | Description |
-|--------|-------------|
-| `results/figures/fig01_crack_spread_history.png` | Crack spread + Â±2Ïƒ rolling band |
-| `results/figures/fig02_zscore_signals.png` | Z-score with trade markers |
-| `results/figures/fig03_equity_curve.png` | NAV + drawdown (dual panel) |
-| `results/figures/fig04_pnl_distribution.png` | Trade P&L histogram + KDE |
-| `results/figures/fig05_rolling_sharpe.png` | 252-day rolling Sharpe |
-| `results/figures/fig06_parameter_heatmap.png` | Walk-forward grid heatmap |
-| `results/figures/fig07_statistical_summary.png` | Test results table figure |
-| `results/figures/fig08_yearly_performance.png` | Annual returns bar chart |
-| `results/figures/fig09_benchmark_comparison.png` | vs. SPY + WTI buy-and-hold |
-| `results/figures/fig10_hurst_rs_analysis.png` | R/S log-log regression |
-| `results/tables/equity_curve.csv` | Daily NAV time series |
-| `results/tables/trade_log.csv` | Every trade with P&L breakdown |
-| `results/tables/performance_metrics.json` | All metrics as JSON |
-| `results/tables/parameter_sweep_results.csv` | Full sweep grid |
-| `dashboard/crack_spread_dashboard.html` | Interactive 6-tab Plotly dashboard |
-| `report/crack_spread_report.tex` | Auto-filled LaTeX report |
-| `report/crack_spread_report.pdf` | Compiled PDF (if pdflatex found) |
+**Signal.** Rolling z-score of the deseasonalised spread. The lookback grid `{20,30,40,50,60}` brackets the
+22–42 day range implied a priori by the fitted 28.2-day OU half-life.
 
----
+**Execution.** A signal from the close of day *t* is executed at the close of day *t+1* (one-period lag on
+the position series), which removes the most common source of look-ahead bias.
 
-## Statistical Framework
+**Sizing.** Volatility targeting at 1 % daily NAV risk against the trailing 20-day standard deviation of
+spread changes, rounded down to whole 1,000-barrel contracts.
 
-| Test | Null Hypothesis | Rejects at | Interpretation |
-|------|----------------|-----------|----------------|
-| **ADF** | Unit root present | p < 0.05 | Spread is stationary (mean-reverts) |
-| **KPSS** | Series is stationary | Fail to reject | Confirms stationarity |
-| **Hurst (R/S)** | H = 0.5 (random walk) | H < 0.5 | Anti-persistent (mean-reverting) |
-| **OU Half-Life** | Î² â‰¥ 0 | Î² < 0 | Finite mean-reversion speed |
+**Costs.** \$0.05/bbl slippage + \$2.50/contract commission on each of entry and exit, plus \$0.02/bbl roll
+cost per month boundary crossed. Total \$44,520 over the full backtest — 4.5 % of initial capital.
 
----
+**Validation.** Rolling-origin walk-forward from a 756-day minimum training history. At each origin the
+grid is evaluated on the training window only, the best configuration is applied to the next unseen block,
+and the origin advances. Out-of-sample returns from all folds are concatenated into one continuous series.
+Confidence intervals use the stationary bootstrap (Politis & Romano, 1994).
 
-## Strategy Parameters (defaults in `config.py`)
+## Component contribution
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `ROLLING_WINDOW` | 40 days | Z-score lookback (overridden by sweep) |
-| `ENTRY_THRESHOLD` | 2.0Ïƒ | Enter position |
-| `EXIT_THRESHOLD` | 0.5Ïƒ | Exit position |
-| `STOP_THRESHOLD` | 4.0Ïƒ | Hard stop (tail-risk) |
-| `INITIAL_NAV` | $1,000,000 | Starting capital |
-| `VOL_TARGET_DAILY` | 1% | Daily NAV risk target |
-| `SLIPPAGE_PER_BBL` | $0.05/bbl | Bid-ask slippage |
-| `COMMISSION_PER_CONTRACT` | $2.50 | Brokerage commission |
-| `ROLL_COST_PER_BBL` | $0.02/bbl | Monthly roll cost |
+Elements tested and **rejected** are reported alongside those adopted, so the reader can judge both:
 
----
+| Component | Full-sample Sharpe | Max DD | Adopted |
+|---|---:|---:|:--:|
+| z-score on raw spread | 0.188 | −24.5 % | baseline |
+| + stop re-entry suppression | 0.386 | −19.3 % | ✔ |
+| + time stop (2 × half-life) | 0.386 | −19.3 % | ✔ |
+| + volatility floor | 0.358 | −19.5 % | ✘ |
+| + gross leverage cap | 0.336 | −19.0 % | ✘ |
+| + asymmetric short threshold | 0.069 | −21.8 % | ✘ |
+| + half-life regime gate | −0.006 | −24.4 % | ✘ |
+| **+ deseasonalisation (K=1)** | **0.490** | **−12.7 %** | ✔ |
 
-## Key Design Decisions
+Four of six additions do not help. The two that do are the two derived from the fitted process — the
+half-life and the annual cycle.
 
-### Anti-Look-Ahead Bias
-Signal generated at close of day **t** is executed at close of day **t+1** (implemented via `pd.Series.shift(1)` on the position series).
+## Limitations
 
-### Walk-Forward Optimisation
-Parameters selected on **30% out-of-sample data only** â€” not in-sample. This prevents overfitting and is how live trading desks select strategy parameters.
+- **Sample length.** Six years, 1,510 observations. Bootstrap intervals do not exclude zero.
+- **Search intensity.** 15 parameter combinations per fold, 8 configurations compared. No deflated Sharpe
+  ratio or reality-check adjustment applied, so reported statistics are upper bounds.
+- **Continuous-contract approximation.** Front-month series with a flat per-crossing roll charge; real
+  calendar-spread roll costs and basis effects are not modelled.
+- **Cost model.** Constant \$0.05/bbl slippage. Liquidity deteriorates during exactly the dislocations that
+  dominate this sample, so realised costs would likely be higher.
+- **Execution realism.** Fills assumed at settlement with no market impact; positions reach 38,000 barrels.
+- **Single instrument.** One spread, one exchange, one period. No claim of generality.
 
-### Volatility Targeting
-Position size scales inversely with current market volatility (20-day rolling Ïƒ of crack changes). During COVID March 2020 or 2022 energy shock, position sizes automatically shrink.
+This is a research result, not a deployable trading product.
 
-### Realistic Costs
-Three cost components: slippage (per barrel) + commission (per contract) + roll cost (per month boundary crossed while in position).
+## Citation
 
----
-
-## Compile the LaTeX Report Manually
-
-If `pdflatex` is on your PATH, the report compiles automatically. Otherwise:
-
-```bash
-cd report
-pdflatex crack_spread_report.tex
-pdflatex crack_spread_report.tex   # Second pass for cross-references
+```bibtex
+@techreport{reddy2026petroquant,
+  title  = {A Seasonally Adjusted Mean-Reversion System for the 3:2:1 Crude Oil Crack Spread},
+  author = {Yeddula Rudraaksh Reddy and S. N. Chakri},
+  year   = {2026},
+  type   = {Technical Report},
+  url    = {https://github.com/rudraakshreddy/petroquant-alpha}
+}
 ```
 
----
+## Authors
 
-## Data Sources
+- **Yeddula Rudraaksh Reddy** — primary and corresponding author ·
+  [yeddularudraaksh@gmail.com](mailto:yeddularudraaksh@gmail.com) ·
+  [LinkedIn](https://www.linkedin.com/in/rudraakshreddy) · [GitHub](https://github.com/rudraakshreddy)
+- **S. N. Chakri** — [snchakrim@gmail.com](mailto:snchakrim@gmail.com) ·
+  [LinkedIn](https://www.linkedin.com/in/snchakri) · [GitHub](https://github.com/snchakri) ·
+  [snchakri.com](https://snchakri.com)
 
-- **Yahoo Finance** via `yfinance`: `CL=F` (WTI), `RB=F` (RBOB), `HO=F` (Heating Oil), `SPY`
-- All tickers are CME front-month continuous contracts
-- Period: 2019-01-01 to 2024-12-31 (~1,258 trading days)
+## License
 
----
+Apache License 2.0 — see [LICENSE](LICENSE).
 
-## References
-
-1. Dickey & Fuller (1979). *Distribution of Estimators for Autoregressive Time Series with a Unit Root.* JASA.
-2. Kwiatkowski et al. (1992). *Testing the null hypothesis of stationarity.* Journal of Econometrics.
-3. Mandelbrot & Wallis (1969). *Robustness of the R/S measure.* Water Resources Research.
-4. Uhlenbeck & Ornstein (1930). *On the theory of Brownian motion.* Physical Review.
-5. Gatev, Goetzmann & Rouwenhorst (2006). *Pairs Trading.* Review of Financial Studies.
+Market data are obtained from publicly available end-of-day futures settlement series and are not
+redistributed by this repository.

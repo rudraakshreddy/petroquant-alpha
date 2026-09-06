@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+report/src/*.aux
+report/src/*.log
+report/src/*.out
+report/src/*.bbl
+report/src/*.blg
+report/src/*.toc
